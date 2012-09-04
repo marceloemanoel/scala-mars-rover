@@ -1,0 +1,46 @@
+apply plugin:"scala"
+apply plugin:"application"
+apply plugin:"eclipse"
+          
+mainClassName = ""
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+    scalaTools 'org.scala-lang:scala-compiler:2.9.2'
+    scalaTools 'org.scala-lang:scala-library:2.9.2'
+
+    compile 'org.scala-lang:scala-library:2.9.2'
+    testCompile 'org.scala-lang:scala-library:2.9.2'
+    testCompile 'org.scalatest:scalatest_2.9.0:1.8'
+}
+
+check {
+    dependsOn = ["spec"]
+}
+
+task spec {
+    group = "Verification"
+    description = "Runs the project specs"
+    logging.level = LogLevel.INFO
+    dependsOn = ["testClasses"]
+    def testResults = new File(buildDir, "spec-results");
+    outputs.dir testResults
+    inputs.dir compileTestScala.outputs
+    ant.taskdef(name: 'scalatest',
+                classname: 'org.scalatest.tools.ScalaTestAntTask',
+                classpath: configurations.testCompile.asPath)
+    
+    doLast {
+        ant.scalatest(runpath: "${sourceSets.test.output.classesDir}:${sourceSets.main.output.classesDir}"){
+           reporter(type:"stdout") 
+           reporter(type:"junitxml", directory: testResults)
+        }
+    }
+}
+
+task wrapper(type:Wrapper) {
+    gradleVersion = "1.1"
+}
